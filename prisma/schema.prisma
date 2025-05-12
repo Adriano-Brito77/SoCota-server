@@ -30,18 +30,14 @@ model User {
 }
 
 model PriceEntry {
-  id               Int      @id @default(autoincrement())
+  id               String    @id @default(uuid())
+  suppliersName    String
   priceCatalogName String
   productName      String
   referenceContent String
-  packaging        String
   usdFobPrice      Float
-  brlFobPrice      Float
-  brlCifPrice      Float
   deliveryStart    DateTime
   deliveryEnd      DateTime
-  billingCenter    String
-  dispatchLocation String
   financialDueDate DateTime
   @@map("price_entries")
 }
