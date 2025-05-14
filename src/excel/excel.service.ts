@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { first } from 'rxjs';
 import { PrismaService } from 'src/prisma.service';
 import * as XLSX from 'xlsx';
+import { format, parse, endOfMonth } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 @Injectable()
 export class ExcelService {
@@ -16,6 +17,7 @@ export class ExcelService {
     const firstRow = json[0]; // primeira linha
 
     if (firstRow[0] == 'Dólar da tela') {
+      //deleta os dados antigos
       await this.prisma.priceEntry.deleteMany({
         where: { suppliersName: 'Cibra' },
       });
@@ -37,7 +39,6 @@ export class ExcelService {
 
       await this.prisma.priceEntry.createMany({
         data: entries,
-        skipDuplicates: true,
       });
       return {
         message: `Planilha importada com sucesso, foram importados: ${entries.length} produtos`,
@@ -58,20 +59,64 @@ export class ExcelService {
         financialDueDate: Date;
       }[] = [];
 
-      for (const sheetName of workbook.SheetNames.slice(0, 3)) {
+      for (const sheetName of workbook.SheetNames.slice(0, 5)) {
+        //Consultando os nomes das 3 primeiras abas
         const sheet = workbook.Sheets[sheetName];
         const json: unknown[][] = XLSX.utils.sheet_to_json(sheet, {
           header: 1,
         });
+        //console.log(sheetName);
+        const nameTable = ['Tabela de Frete'];
+
+        if (nameTable.includes(sheetName)) {
+          continue; // ignora tabelas de frete
+        }
 
         if (!json || json.length < 14) continue; // ignora abas vazias ou mal formatadas
 
         const dataRows = json.slice(13); // ignora cabeçalho
+
         const listeDate = json[11];
 
         const trimDate = listeDate?.[1]?.toString?.() || '';
         const dateParts = trimDate.split(' ');
         const realdate = dateParts[4] || ''; // ISO-like date
+
+        const monthstart = sheetName.split(' ')[1];
+        const monthend = sheetName.split(' ')[3];
+
+        console.log(monthstart);
+        console.log(monthend);
+
+        // Função que converte "janeiro" -> "01/01/2025"
+        function getFirstDayOfMonth(
+          monthName: string,
+          year = new Date().getFullYear(),
+        ): string {
+          // Converte nome do mês para data usando o formato "MMMM" (ex: 'janeiro')
+          const parsedDate = parse(monthName, 'MMMM', new Date(), {
+            locale: ptBR,
+          });
+          // Define o ano atual
+          parsedDate.setFullYear(year);
+          // Retorna no formato "dd/MM/yyyy"
+          return format(parsedDate, 'dd/MM/yyyy');
+        }
+
+        function getLastDayOfMonth(
+          monthName: string,
+          year = new Date().getFullYear(),
+        ): string {
+          const parsedDate = parse(monthName, 'MMMM', new Date(), {
+            locale: ptBR,
+          });
+          parsedDate.setFullYear(year);
+          const lastDay = endOfMonth(parsedDate);
+          return format(lastDay, 'dd/MM/yyyy');
+        }
+
+        const deliveryStart = getFirstDayOfMonth(monthstart);
+        const deliveryEnd = getLastDayOfMonth(monthend);
 
         const entries = dataRows
           .filter((row: unknown[]) => row)
@@ -83,19 +128,18 @@ export class ExcelService {
             usdFobPrice:
               Math.round(parseFloat(String(row[2]).replace(/[^\d.-]/g, ''))) ||
               0,
-            deliveryStart: this.excelDateToJSDate(realdate),
-            deliveryEnd: this.excelDateToJSDate(realdate),
+            deliveryStart: this.excelDateToJSDate(deliveryStart),
+            deliveryEnd: this.excelDateToJSDate(deliveryEnd),
             financialDueDate: this.excelDateToJSDate(realdate),
           }));
 
         allEntries.push(...entries);
       }
-      //console.log(allEntries);
+      console.log(allEntries);
 
       if (allEntries.length > 0) {
         await this.prisma.priceEntry.createMany({
           data: allEntries,
-          skipDuplicates: true,
         });
       }
 
