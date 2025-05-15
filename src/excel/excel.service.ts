@@ -18,7 +18,7 @@ export class ExcelService {
 
     if (firstRow[0] == 'Dólar da tela') {
       //deleta os dados antigos
-      await this.prisma.priceEntry.deleteMany({
+      await this.prisma.products.deleteMany({
         where: { suppliersName: 'Cibra' },
       });
 
@@ -37,14 +37,14 @@ export class ExcelService {
           financialDueDate: this.excelDateToJSDate(row[11]),
         }));
 
-      await this.prisma.priceEntry.createMany({
+      await this.prisma.products.createMany({
         data: entries,
       });
       return {
         message: `Planilha importada com sucesso, foram importados: ${entries.length} produtos`,
       };
     } else {
-      await this.prisma.priceEntry.deleteMany({
+      await this.prisma.products.deleteMany({
         where: { suppliersName: 'Eurochem' },
       });
 
@@ -65,14 +65,14 @@ export class ExcelService {
         const json: unknown[][] = XLSX.utils.sheet_to_json(sheet, {
           header: 1,
         });
-        //console.log(sheetName);
+
         const nameTable = ['Tabela de Frete'];
 
         if (nameTable.includes(sheetName)) {
           continue; // ignora tabelas de frete
         }
 
-        if (!json || json.length < 14) continue; // ignora abas vazias ou mal formatadas
+        if (!json || json.length < 3) continue; // ignora abas vazias ou mal formatadas
 
         const dataRows = json.slice(13); // ignora cabeçalho
 
@@ -119,10 +119,10 @@ export class ExcelService {
         const deliveryEnd = getLastDayOfMonth(monthend);
 
         const entries = dataRows
-          .filter((row: unknown[]) => row)
+          .filter((row: unknown[]) => row.length >= 2)
           .map((row) => ({
             suppliersName: 'Eurochem',
-            priceCatalogName: row[0]?.toString() || '',
+            priceCatalogName: row[0]?.toString() || 'teste',
             productName: row[1]?.toString() || '',
             referenceContent: row[1]?.toString() || '',
             usdFobPrice:
@@ -132,13 +132,12 @@ export class ExcelService {
             deliveryEnd: this.excelDateToJSDate(deliveryEnd),
             financialDueDate: this.excelDateToJSDate(realdate),
           }));
-
+        console.log(dataRows);
         allEntries.push(...entries);
       }
-      console.log(allEntries);
 
       if (allEntries.length > 0) {
-        await this.prisma.priceEntry.createMany({
+        await this.prisma.products.createMany({
           data: allEntries,
         });
       }

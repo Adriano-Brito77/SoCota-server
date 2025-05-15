@@ -29,7 +29,7 @@ model User {
   @@map("users")
 }
 
-model PriceEntry {
+model Products {
   id               String    @id @default(uuid())
   suppliersName    String
   priceCatalogName String
@@ -39,5 +39,37 @@ model PriceEntry {
   deliveryStart    DateTime
   deliveryEnd      DateTime
   financialDueDate DateTime
-  @@map("price_entries")
+  @@map("Products")
+}
+
+model suppliers{
+  id String @id @default(cuid())
+  name String
+  finance_rate_before_date Float
+  finance_rate_after_date Float
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("suppliers")
+}
+
+model Conpanies {
+  id String @id @default(cuid())
+  name String
+  finance_rate Float
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("Conpanies")
+}
+
+
+model Profit_margins{
+  id String @id @default(cuid())
+  conpanie_id String
+  profit_amount Float
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("Profit_margins")
 }
