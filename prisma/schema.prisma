@@ -18,13 +18,13 @@ datasource db {
 
 
 model User {
-  id     String   @id @default(cuid())
-  name   String?
-  email  String?  @unique
-  password String?
-  user_type String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id               String   @id @default(cuid())
+  name             String?
+  email            String?  @unique
+  password         String?
+  user_type        String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
 
   @@map("users")
 }
@@ -39,37 +39,37 @@ model Products {
   deliveryStart    DateTime
   deliveryEnd      DateTime
   financialDueDate DateTime
-  @@map("Products")
+  @@map("products")
 }
 
-model suppliers{
-  id String @id @default(cuid())
-  name String
-  finance_rate_before_date Float
-  finance_rate_after_date Float
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+model Suppliers{
+  id                           String @id @default(cuid())
+  name                         String @unique
+  finance_rate_before_date     Float
+  finance_rate_after_date      Float
+  created_at                   DateTime @default(now())
+  updated_at                   DateTime @updatedAt
 
   @@map("suppliers")
 }
 
-model Conpanies {
-  id String @id @default(cuid())
-  name String
-  finance_rate Float
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+model Companies {
+  id              String @id @default(cuid())
+  name            String @unique
+  finance_rate    Float
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
 
-  @@map("Conpanies")
+  @@map("companies")
 }
 
 
 model Profit_margins{
-  id String @id @default(cuid())
-  conpanie_id String
-  profit_amount Float
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id             String @id @default(cuid())
+  conpanie_id    String
+  profit_amount  Float
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 
-  @@map("Profit_margins")
+  @@map("profit_margins")
 }

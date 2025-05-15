@@ -3,10 +3,16 @@ import { PrismaService } from 'src/prisma.service';
 import * as XLSX from 'xlsx';
 import { format, parse, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { PaginationDto } from './pagination/dto/pagination.dto';
+import { Prisma } from '@prisma/client';
+import { PaginationService } from './pagination/pagination.service';
 
 @Injectable()
 export class ExcelService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private paginationService: PaginationService,
+  ) {}
 
   async processPriceList(file: Express.Multer.File) {
     const workbook = XLSX.read(file.buffer, { type: 'buffer' });
@@ -168,5 +174,47 @@ export class ExcelService {
     }
 
     return new Date(); // fallback
+  }
+
+  async findAll({ page, pageSize, orderBy, search }: PaginationDto) {
+    let where = {} as Prisma.ProductsWhereInput;
+
+    if (search) {
+      where = {
+        ...where,
+        OR: [
+          {
+            suppliersName: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      };
+    }
+
+    let orderByObject: Prisma.ProductsOrderByWithAggregationInput | undefined =
+      undefined;
+
+    if (orderBy && orderBy.includes(',')) {
+      const [campo, direcao] = orderBy.split(',');
+      if (campo && (direcao === 'asc' || direcao === 'desc')) {
+        orderByObject = {
+          [campo]: direcao,
+        } as Prisma.ProductsOrderByWithAggregationInput;
+      }
+    }
+
+    const data = await this.paginationService.paginate<
+      Prisma.ProductsWhereInput,
+      Prisma.ProductsOrderByWithAggregationInput
+    >(this.prisma.products, {
+      page,
+      pageSize,
+      where,
+      orderBy: orderByObject,
+    });
+
+    return data;
   }
 }
