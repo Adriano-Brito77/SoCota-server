@@ -73,3 +73,20 @@ model Profit_margins{
 
   @@map("profit_margins")
 }
+
+
+model Quotations{
+  id               String @id @default(cuid())
+  product_id       String
+  supplier_id      String
+  company_id       String
+  profit_margin_id String
+  payment_date     String
+  dollar_rate      Float
+  price            Float
+  delivery_fee     Float
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  @@map("quotations")
+}

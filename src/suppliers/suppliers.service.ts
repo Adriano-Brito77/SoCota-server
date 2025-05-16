@@ -2,7 +2,11 @@ import { NotFoundException } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
-import { UnauthorizedException, ConflictException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { PaginationService } from '../excel/pagination/pagination.service';
 import { PaginationDto } from '../excel/pagination/dto/pagination.dto';
@@ -20,7 +24,7 @@ export class SuppliersService {
     finance_rate_before_date,
   }: CreateSupplierDto) {
     if (!name) {
-      throw new UnauthorizedException('Digite o nome do fornecedor.');
+      throw new BadRequestException('Digite o nome do fornecedor.');
     }
     const nameExists = await this.prisma.suppliers.findUnique({
       where: { name },

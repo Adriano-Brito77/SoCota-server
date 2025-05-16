@@ -149,6 +149,10 @@ export class CompaniesService {
       where: { id },
     });
 
+    const profitMargins = await this.prisma.profit_margins.deleteMany({
+      where: { conpanie_id: id },
+    });
+
     return {
       message: `Empresa ${company.name} deletada com sucesso`,
     };

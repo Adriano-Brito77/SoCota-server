@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common';
 import { ExcelModule } from './excel/excel.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { CompaniesModule } from './companies/companies.module';
+import { QuotationsModule } from './quotations/quotations.module';
 
 @Module({
-  imports: [ExcelModule, SuppliersModule, CompaniesModule],
+  imports: [ExcelModule, SuppliersModule, CompaniesModule, QuotationsModule],
   controllers: [],
   providers: [],
 })
