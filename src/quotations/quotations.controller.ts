@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { QuotationsService } from './quotations.service';
 import { CreateQuotationDto } from './dto/create-quotation.dto';
 import { UpdateQuotationDto } from './dto/update-quotation.dto';
@@ -8,7 +16,7 @@ export class QuotationsController {
   constructor(private readonly quotationsService: QuotationsService) {}
 
   @Post()
-  create(@Body() createQuotationDto: CreateQuotationDto) {
+  create(@Body() createQuotationDto: CreateQuotationDto[]) {
     return this.quotationsService.create(createQuotationDto);
   }
 
@@ -23,7 +31,10 @@ export class QuotationsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateQuotationDto: UpdateQuotationDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateQuotationDto: UpdateQuotationDto,
+  ) {
     return this.quotationsService.update(+id, updateQuotationDto);
   }
 

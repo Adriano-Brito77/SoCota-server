@@ -33,10 +33,10 @@ export class SuppliersService {
       throw new ConflictException('Fornecedor já existe.');
     }
     if (!finance_rate_after_date) {
-      finance_rate_after_date = 1;
+      finance_rate_after_date = 0;
     }
     if (!finance_rate_before_date) {
-      finance_rate_before_date = 1;
+      finance_rate_before_date = 0;
     }
 
     const supplier = {

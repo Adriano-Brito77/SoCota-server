@@ -66,7 +66,7 @@ export class ExcelService {
       }[] = [];
 
       for (const sheetName of workbook.SheetNames.slice(0, 5)) {
-        //Consultando os nomes das 3 primeiras abas
+        //Consultando os nomes das 5 primeiras abas
         const sheet = workbook.Sheets[sheetName];
         const json: unknown[][] = XLSX.utils.sheet_to_json(sheet, {
           header: 1,
