@@ -1,29 +1,27 @@
-import { Quotation } from './entities/quotation.entity';
-import { Products } from './../../node_modules/.prisma/client/index.d';
 import { Injectable } from '@nestjs/common';
 import { CreateQuotationDto } from './dto/create-quotation.dto';
 import { UpdateQuotationDto } from './dto/update-quotation.dto';
 import { PrismaService } from 'src/prisma.service';
+import { BadRequestException } from '@nestjs/common';
 import {
-  BadRequestException,
-  ConflictException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import {
-  parse,
   isAfter,
   isBefore,
   isEqual,
   startOfMonth,
   differenceInMonths,
 } from 'date-fns';
-import { format } from 'date-fns';
+import { Prisma } from '@prisma/client';
+import { PaginationService } from '../excel/pagination/pagination.service';
+import { PaginationDto } from '../excel/pagination/dto/pagination.dto';
 
 @Injectable()
 export class QuotationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private paginationService: PaginationService,
+  ) {}
 
-  async create(quotations: CreateQuotationDto[]) {
+  async create(quotations: CreateQuotationDto[], userId: string) {
     const results: { message: string; quotation: any }[] = [];
 
     for (const quotation of quotations) {
@@ -119,6 +117,7 @@ export class QuotationsService {
           price: newProductsCostWithProfitFinal,
           delivery_fee: delivery_fee,
           dollar_rate: dollar_rate,
+          userId: userId,
         };
 
         const created = await this.prisma.quotations.create({
@@ -164,6 +163,7 @@ export class QuotationsService {
           price: newProductsCostWithProfitFinal,
           delivery_fee: delivery_fee,
           dollar_rate: dollar_rate,
+          userId: userId,
         };
 
         const created = await this.prisma.quotations.create({
@@ -200,6 +200,7 @@ export class QuotationsService {
           price: newProductsCostWithProfitFinal,
           delivery_fee: delivery_fee,
           dollar_rate: dollar_rate,
+          userId: userId,
         };
 
         const created = await this.prisma.quotations.create({
@@ -239,6 +240,7 @@ export class QuotationsService {
           price: newProductsCostWithProfitFinal,
           delivery_fee: delivery_fee,
           dollar_rate: dollar_rate,
+          userId: userId,
         };
 
         const created = await this.prisma.quotations.create({
@@ -299,19 +301,73 @@ export class QuotationsService {
     return 'As datas não podem ser comparadas';
   }
 
-  async findAll() {
-    return `This action returns all quotations`;
+  async findAll(
+    { page, pageSize, orderBy, search }: PaginationDto,
+    userId: string,
+  ) {
+    let where = { userId: userId } as Prisma.QuotationsWhereInput;
+
+    if (search) {
+      where = {
+        ...where,
+        OR: [
+          {
+            company_id: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      };
+    }
+
+    let orderByObject:
+      | Prisma.QuotationsOrderByWithAggregationInput
+      | undefined = undefined;
+
+    if (orderBy && orderBy.includes(',')) {
+      const [campo, direcao] = orderBy.split(',');
+      if (campo && (direcao === 'asc' || direcao === 'desc')) {
+        orderByObject = {
+          [campo]: direcao,
+        } as Prisma.QuotationsOrderByWithAggregationInput;
+      }
+    }
+
+    const data = await this.paginationService.paginate<
+      Prisma.QuotationsWhereInput,
+      Prisma.QuotationsOrderByWithAggregationInput
+    >(this.prisma.quotations, {
+      page,
+      pageSize,
+      where,
+      orderBy: orderByObject,
+      include: {
+        products: true,
+        suppliers: true,
+        companies: true,
+        profit_margins: true,
+      },
+    });
+
+    return data;
   }
 
-  async findOne(id: number) {
-    return `This action returns a #${id} quotation`;
-  }
+  async remove(id: string, userId: string) {
+    const quotation = await this.prisma.quotations.findUnique({
+      where: { id: id, userId: userId },
+    });
 
-  async update(id: number, updateQuotationDto: UpdateQuotationDto) {
-    return `This action updates a #${id} quotation`;
-  }
+    if (!quotation) {
+      throw new BadRequestException('Cotação não encontrada.');
+    }
 
-  async remove(id: number) {
-    return `This action removes a #${id} quotation`;
+    await this.prisma.quotations.delete({
+      where: { id: id, userId: userId },
+    });
+
+    return {
+      message: 'Cotação excluída com sucesso.',
+    };
   }
 }

@@ -19,9 +19,9 @@ datasource db {
 
 model User {
   id               String   @id @default(cuid())
-  name             String?
-  email            String?  @unique
-  password         String?
+  name             String
+  email            String  @unique
+  password         String
   user_type        String?
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
@@ -39,6 +39,8 @@ model Products {
   deliveryStart    DateTime
   deliveryEnd      DateTime
   financialDueDate DateTime
+  userId         String
+  Quotations  Quotations[] 
   @@map("products")
 }
 
@@ -49,6 +51,8 @@ model Suppliers{
   finance_rate_after_date      Float
   created_at                   DateTime @default(now())
   updated_at                   DateTime @updatedAt
+  userId         String
+  Quotations  Quotations[] 
 
   @@map("suppliers")
 }
@@ -59,6 +63,8 @@ model Companies {
   finance_rate    Float
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
+  userId         String
+  Quotations  Quotations[] 
 
   @@map("companies")
 }
@@ -70,6 +76,8 @@ model Profit_margins{
   profit_amount  Float
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
+  userId         String
+  Quotations  Quotations[] 
 
   @@map("profit_margins")
 }
@@ -87,6 +95,12 @@ model Quotations{
   delivery_fee     Float
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
+  userId         String
 
+  products        Products @relation(fields: [product_id], references: [id])
+  suppliers       Suppliers @relation(fields: [supplier_id], references: [id])
+  companies       Companies @relation(fields: [company_id], references: [id])
+  profit_margins  Profit_margins @relation(fields: [profit_margin_id], references: [id])
+  
   @@map("quotations")
 }

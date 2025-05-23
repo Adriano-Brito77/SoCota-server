@@ -18,11 +18,14 @@ export class SuppliersService {
     private readonly prisma: PrismaService,
     private paginationService: PaginationService,
   ) {}
-  async create({
-    name,
-    finance_rate_after_date,
-    finance_rate_before_date,
-  }: CreateSupplierDto) {
+  async create(
+    {
+      name,
+      finance_rate_after_date,
+      finance_rate_before_date,
+    }: CreateSupplierDto,
+    userId: string,
+  ) {
     if (!name) {
       throw new BadRequestException('Digite o nome do fornecedor.');
     }
@@ -50,6 +53,7 @@ export class SuppliersService {
         name: supplier.name,
         finance_rate_after_date: supplier.finance_rate_after_date,
         finance_rate_before_date: supplier.finance_rate_before_date,
+        userId: userId,
       },
     });
 
@@ -58,8 +62,13 @@ export class SuppliersService {
     };
   }
 
-  async findAll({ page, pageSize, orderBy, search }: PaginationDto) {
-    let where = {} as Prisma.SuppliersWhereInput;
+  async findAll(
+    { page, pageSize, orderBy, search }: PaginationDto,
+    userId: string,
+  ) {
+    let where = {
+      userId: userId,
+    } as Prisma.SuppliersWhereInput;
 
     if (search) {
       where = {
@@ -107,9 +116,10 @@ export class SuppliersService {
       finance_rate_after_date,
       finance_rate_before_date,
     }: UpdateSupplierDto,
+    userId: string,
   ) {
     const supplierExists = await this.prisma.suppliers.findUnique({
-      where: { id },
+      where: { id: id, userId: userId },
     });
 
     if (!supplierExists) {
@@ -121,7 +131,7 @@ export class SuppliersService {
     }
 
     const data = await this.prisma.suppliers.update({
-      where: { id },
+      where: { id: id, userId: userId },
       data: {
         name: name,
         finance_rate_after_date: finance_rate_after_date,
@@ -134,18 +144,30 @@ export class SuppliersService {
     };
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId: string) {
     if (!id) {
       throw new NotFoundException('Fornecedor não encontrado.');
     }
+
     const supplierExists = await this.prisma.suppliers.findUnique({
-      where: { id },
+      where: { id: id, userId: userId },
     });
     if (!supplierExists) {
       throw new NotFoundException('Fornecedor não encontrado.');
     }
+
+    const quotatiosEcists = await this.prisma.quotations.findFirst({
+      where: { supplier_id: id, userId: userId },
+    });
+
+    if (quotatiosEcists) {
+      throw new NotFoundException(
+        'Não é possível deletar esse fornecedor,pois ele já foi utilizado em uma ou mais cotações.',
+      );
+    }
+
     const supplier = await this.prisma.suppliers.delete({
-      where: { id },
+      where: { id: id, userId: userId },
     });
 
     return {

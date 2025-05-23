@@ -14,7 +14,7 @@ export class ExcelService {
     private paginationService: PaginationService,
   ) {}
 
-  async processPriceList(file: Express.Multer.File) {
+  async processPriceList(file: Express.Multer.File, userId: string) {
     const workbook = XLSX.read(file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
@@ -41,6 +41,7 @@ export class ExcelService {
           deliveryStart: this.excelDateToJSDate(row[7]),
           deliveryEnd: this.excelDateToJSDate(row[8]),
           financialDueDate: this.excelDateToJSDate(row[11]),
+          userId: userId,
         }));
 
       await this.prisma.products.createMany({
@@ -63,6 +64,7 @@ export class ExcelService {
         deliveryStart: Date;
         deliveryEnd: Date;
         financialDueDate: Date;
+        userId: string;
       }[] = [];
 
       for (const sheetName of workbook.SheetNames.slice(0, 5)) {
@@ -90,9 +92,6 @@ export class ExcelService {
 
         const monthstart = sheetName.split(' ')[1];
         const monthend = sheetName.split(' ')[3];
-
-        console.log(monthstart);
-        console.log(monthend);
 
         // Função que converte "janeiro" -> "01/01/2025"
         function getFirstDayOfMonth(
@@ -137,6 +136,7 @@ export class ExcelService {
             deliveryStart: this.excelDateToJSDate(deliveryStart),
             deliveryEnd: this.excelDateToJSDate(deliveryEnd),
             financialDueDate: this.excelDateToJSDate(realdate),
+            userId: userId,
           }));
         console.log(dataRows);
         allEntries.push(...entries);
@@ -176,8 +176,13 @@ export class ExcelService {
     return new Date(); // fallback
   }
 
-  async findAll({ page, pageSize, orderBy, search }: PaginationDto) {
-    let where = {} as Prisma.ProductsWhereInput;
+  async findAll(
+    { page, pageSize, orderBy, search }: PaginationDto,
+    userId: string,
+  ) {
+    let where = {
+      userId: userId,
+    } as Prisma.ProductsWhereInput;
 
     if (search) {
       where = {

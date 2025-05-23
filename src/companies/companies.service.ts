@@ -9,12 +9,15 @@ import { BadRequestException, ConflictException } from '@nestjs/common';
 export class CompaniesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create({ name, finance_rate, profit_amount }: CreateCompanyDto) {
+  async create(
+    { name, finance_rate, profit_amount }: CreateCompanyDto,
+    userId: string,
+  ) {
     if (!name) {
       throw new BadRequestException('Digite o nome da empresa.');
     }
     const nameExists = await this.prisma.companies.findUnique({
-      where: { name },
+      where: { name, userId },
     });
 
     if (nameExists) {
@@ -32,12 +35,14 @@ export class CompaniesService {
       name,
       finance_rate,
       profit_amount,
+      userId: userId,
     };
 
     const newCompany = await this.prisma.companies.create({
       data: {
         name: company.name,
         finance_rate: company.finance_rate,
+        userId: company.userId,
       },
       select: {
         id: true, // Retorna apenas o campo "id"
@@ -48,6 +53,7 @@ export class CompaniesService {
       data: company.profit_amount.map((amount) => ({
         conpanie_id: newCompany.id,
         profit_amount: amount,
+        userId: userId,
       })),
     });
     return {
@@ -55,13 +61,16 @@ export class CompaniesService {
     };
   }
 
-  async findAll() {
-    const companies = await this.prisma.companies.findMany({});
+  async findAll(userId: string) {
+    const companies = await this.prisma.companies.findMany({
+      where: { userId: userId },
+    });
     if (!companies) {
       throw new BadRequestException('Nenhuma empresa encontrada.');
     }
     const profitMargins = await this.prisma.profit_margins.findMany({
       where: {
+        userId: userId,
         conpanie_id: {
           in: companies.map((company) => company.id),
         },
@@ -90,13 +99,21 @@ export class CompaniesService {
   async update(
     id: string,
     { name, finance_rate, profit_amount }: UpdateCompanyDto,
+    userId: string,
   ) {
     if (!id) {
       throw new BadRequestException('Essa empresa não existe.');
     }
 
+    const idCompanyExists = await this.prisma.companies.findUnique({
+      where: { id, userId },
+    });
+
+    if (!idCompanyExists) {
+      throw new BadRequestException('Essa empresa não existe.');
+    }
     const companyExists = await this.prisma.companies.findUnique({
-      where: { name },
+      where: { name, userId },
     });
 
     if (companyExists) {
@@ -104,7 +121,7 @@ export class CompaniesService {
     }
 
     const companyUpdated = await this.prisma.companies.update({
-      where: { id },
+      where: { id, userId },
       data: {
         name: name,
         finance_rate: finance_rate,
@@ -112,7 +129,7 @@ export class CompaniesService {
     });
 
     const CompaniesProfitMargins = await this.prisma.profit_margins.findMany({
-      where: { conpanie_id: id },
+      where: { conpanie_id: id, userId },
       select: {
         id: true,
       },
@@ -135,22 +152,32 @@ export class CompaniesService {
     };
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId: string) {
     if (!id) {
       throw new BadRequestException('Essa empresa não existe.');
     }
     const companyExists = await this.prisma.companies.findUnique({
-      where: { id },
+      where: { id, userId },
     });
     if (!companyExists) {
-      throw new BadRequestException('Essa empresa não existe.');
+      throw new BadRequestException('Empresa não está registrada.');
     }
+    const quotatiosExists = await this.prisma.quotations.findFirst({
+      where: { company_id: id, userId },
+    });
+
+    if (quotatiosExists) {
+      throw new BadRequestException(
+        'Ja existe uma ou mias cotação para a empresa.',
+      );
+    }
+
     const company = await this.prisma.companies.delete({
       where: { id },
     });
 
     const profitMargins = await this.prisma.profit_margins.deleteMany({
-      where: { conpanie_id: id },
+      where: { conpanie_id: id, userId },
     });
 
     return {
