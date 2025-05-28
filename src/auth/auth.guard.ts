@@ -14,11 +14,12 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
+    console.log(request.headers.authorization);
 
     // Tentando extrair o token apenas dos cookies
-    const token = this.extractTokenFromCookies(request);
+    const token = this.extractTokenFromHeader(request);
     if (!token) {
-      throw new UnauthorizedException('Usuário não autenticado');
+      throw new UnauthorizedException('Usuário não autenticado.');
     }
 
     try {
@@ -30,14 +31,17 @@ export class AuthGuard implements CanActivate {
       // Adicionando o payload no request para que as rotas protegidas possam acessar
       request['user'] = payload;
     } catch {
-      throw new UnauthorizedException('Usuário não autenticado!');
+      throw new UnauthorizedException('Usuário não autenticado!!!!');
     }
 
     return true;
   }
 
-  private extractTokenFromCookies(request: Request): string | undefined {
-    // Extraindo o token diretamente dos cookies
-    return request.cookies['access_token'];
+  private extractTokenFromHeader(request: Request): string | undefined {
+    const authHeader = request.headers['authorization'];
+    if (!authHeader) return undefined;
+
+    const [type, token] = authHeader.split(' ');
+    return type === 'Bearer' ? token : undefined;
   }
 }
