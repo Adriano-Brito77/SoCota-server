@@ -14,7 +14,6 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    console.log(request.headers.authorization);
 
     // Tentando extrair o token apenas dos cookies
     const token = this.extractTokenFromHeader(request);

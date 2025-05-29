@@ -5,6 +5,7 @@ import {
   UploadedFile,
   UseInterceptors,
   UseGuards,
+  Body,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ExcelService } from './excel.service';
@@ -23,9 +24,11 @@ export class ExcelController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadPriceList(
     @UploadedFile() file: Express.Multer.File,
-    @CurrentUser() user: AuthUser,
+    @Body('id') id: string,
+    @CurrentUser()
+    user: AuthUser,
   ) {
-    return this.priceService.processPriceList(file, user.id);
+    return this.priceService.processPriceList(file, user.id, id);
   }
   @Get('products')
   async getProducts(

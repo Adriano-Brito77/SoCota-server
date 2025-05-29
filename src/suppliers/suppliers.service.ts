@@ -75,7 +75,7 @@ export class SuppliersService {
         ...where,
         OR: [
           {
-            name: {
+            id: {
               contains: search,
               mode: 'insensitive',
             },

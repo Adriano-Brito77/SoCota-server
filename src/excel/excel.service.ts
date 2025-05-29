@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import * as XLSX from 'xlsx';
 import { format, parse, endOfMonth } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { id, ptBR } from 'date-fns/locale';
 import { PaginationDto } from './pagination/dto/pagination.dto';
 import { Prisma } from '@prisma/client';
 import { PaginationService } from './pagination/pagination.service';
@@ -14,7 +14,11 @@ export class ExcelService {
     private paginationService: PaginationService,
   ) {}
 
-  async processPriceList(file: Express.Multer.File, userId: string) {
+  async processPriceList(
+    file: Express.Multer.File,
+    userId: string,
+    id: string,
+  ) {
     const workbook = XLSX.read(file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
@@ -25,7 +29,7 @@ export class ExcelService {
     if (firstRow[0] == 'Dólar da tela') {
       //deleta os dados antigos
       await this.prisma.products.deleteMany({
-        where: { suppliersName: 'Cibra' },
+        where: { suppliersName: id },
       });
 
       const dataRows = json.slice(4); // ignora cabeçalho e as 4 primeiras linhas
@@ -33,7 +37,7 @@ export class ExcelService {
       const entries = dataRows
         .filter((row: unknown[]) => row.length >= 12)
         .map((row) => ({
-          suppliersName: 'Cibra',
+          suppliersName: id,
           priceCatalogName: row[0]?.toString() || '',
           productName: row[1]?.toString() || '',
           referenceContent: row[2]?.toString() || '',
@@ -52,7 +56,7 @@ export class ExcelService {
       };
     } else {
       await this.prisma.products.deleteMany({
-        where: { suppliersName: 'Eurochem' },
+        where: { suppliersName: id },
       });
 
       const allEntries: {
@@ -126,7 +130,8 @@ export class ExcelService {
         const entries = dataRows
           .filter((row: unknown[]) => row.length >= 2)
           .map((row) => ({
-            suppliersName: 'Eurochem',
+            suppliersName: id,
+            suppliersId: id,
             priceCatalogName: row[0]?.toString() || 'teste',
             productName: row[1]?.toString() || '',
             referenceContent: row[1]?.toString() || '',
@@ -138,7 +143,7 @@ export class ExcelService {
             financialDueDate: this.excelDateToJSDate(realdate),
             userId: userId,
           }));
-        console.log(dataRows);
+
         allEntries.push(...entries);
       }
 

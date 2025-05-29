@@ -43,12 +43,12 @@ export class AuthService {
     const token = await this.jwtService.signAsync(payload);
 
     //Salvando o token no cookie
-    res.cookie('access_token', token, {
-      httpOnly: true, // Protege contra acesso via JavaScript no frontend
-      secure: false, // true apenas em produção (HTTPS)
-      sameSite: 'lax', // Permite compartilhamento entre frontend/backend
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias de validade
-    });
+    // res.cookie('access_token', token, {
+    //   httpOnly: true, // Protege contra acesso via JavaScript no frontend
+    //   secure: false, // true apenas em produção (HTTPS)
+    //   sameSite: 'lax', // Permite compartilhamento entre frontend/backend
+    //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias de validade
+    // });
 
     // Enviando a resposta com os dados do usuário
     res.json({ user: { name: user.name }, token });
