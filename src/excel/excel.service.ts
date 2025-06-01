@@ -247,4 +247,14 @@ export class ExcelService {
 
     return data;
   }
+  async findAllProducts(userId: string, id: string) {
+    const allProductsSuppliers = await this.prisma.products.findMany({
+      where: { userId: userId, suppliersId: id },
+    });
+
+    const products = {
+      data: allProductsSuppliers,
+    };
+    return allProductsSuppliers;
+  }
 }

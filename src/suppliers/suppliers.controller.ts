@@ -29,6 +29,10 @@ export class SuppliersController {
   ) {
     return this.suppliersService.create(createSupplierDto, user.id);
   }
+  @Get('allsuppliers')
+  findAllSuplliers(@CurrentUser() user: AuthUser) {
+    return this.suppliersService.findAllsuppliers(user.id);
+  }
 
   @Get()
   findAll(@Query() query: PaginationDto, @CurrentUser() user: AuthUser) {

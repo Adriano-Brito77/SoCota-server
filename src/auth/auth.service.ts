@@ -62,7 +62,7 @@ export class AuthService {
     }
 
     const payload = { email: user.email };
-    const token = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const token = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     const resetLink = `http://localhost:3000/reset-password?token=${token}`;
 

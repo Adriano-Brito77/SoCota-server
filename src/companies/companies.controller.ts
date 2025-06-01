@@ -10,6 +10,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { CompaniesService } from './companies.service';
+
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
@@ -30,9 +31,17 @@ export class CompaniesController {
     return this.companiesService.create(createCompanyDto, user.id);
   }
 
+  @Get('allcompanies')
+  findAllProducts(@CurrentUser() user: AuthUser) {
+    return this.companiesService.findAllcompanies(user.id);
+  }
   @Get()
   findAll(@Query() query: PaginationDto, @CurrentUser() user: AuthUser) {
     return this.companiesService.findAll(query, user.id);
+  }
+  @Get('allprofit/:id')
+  findAllProfit(@CurrentUser() user: AuthUser, @Param('id') id?: string) {
+    return this.companiesService.findAllProfit(user.id, id ?? '');
   }
 
   @Patch(':id')

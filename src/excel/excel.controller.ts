@@ -6,6 +6,7 @@ import {
   UseInterceptors,
   UseGuards,
   Body,
+  Param,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ExcelService } from './excel.service';
@@ -36,5 +37,9 @@ export class ExcelController {
     @CurrentUser() user: AuthUser,
   ) {
     return this.priceService.findAll(query, user.id);
+  }
+  @Get('allproducts/:id')
+  findAll(@CurrentUser() user: AuthUser, @Param('id') id?: string) {
+    return this.priceService.findAllProducts(user.id, id ?? '');
   }
 }

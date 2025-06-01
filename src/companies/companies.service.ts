@@ -30,10 +30,10 @@ export class CompaniesService {
     }
 
     if (!finance_rate) {
-      finance_rate = 1;
+      throw new BadRequestException('Digite o financeiro da empresa.');
     }
-    if (!profit_amount) {
-      profit_amount = [1];
+    if (!profit_amount || profit_amount.length === 0) {
+      throw new BadRequestException('Digite pelo menos uma margem.');
     }
 
     const company = {
@@ -115,6 +115,20 @@ export class CompaniesService {
 
     return data;
   }
+  async findAllcompanies(userId: string) {
+    const companies = await this.prisma.companies.findMany({
+      where: { userId: userId },
+    });
+
+    return companies;
+  }
+  async findAllProfit(userId: string, id: string) {
+    const profit = await this.prisma.profit_margins.findMany({
+      where: { userId: userId, company_id: id },
+    });
+
+    return profit;
+  }
 
   async update(
     id: string,
@@ -132,11 +146,17 @@ export class CompaniesService {
     if (!idCompanyExists) {
       throw new BadRequestException('Essa empresa não existe.');
     }
-    const companyExists = await this.prisma.companies.findUnique({
-      where: { name, userId },
+    const companyWithSameName = await this.prisma.companies.findFirst({
+      where: {
+        name,
+        userId,
+        NOT: {
+          id: id, // Ignora a própria empresa
+        },
+      },
     });
 
-    if (companyExists) {
+    if (companyWithSameName) {
       throw new BadRequestException('Essa empresa ja existe.');
     }
 
@@ -156,7 +176,6 @@ export class CompaniesService {
     });
 
     for (const [index, profitMargin] of CompaniesProfitMargins.entries()) {
-      console.log(index, profitMargin);
       if (profit_amount && profit_amount[index] !== undefined) {
         await this.prisma.profit_margins.update({
           where: { id: profitMargin.id },

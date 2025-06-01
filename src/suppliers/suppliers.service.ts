@@ -57,6 +57,13 @@ export class SuppliersService {
       message: `Fornecedor ${name} criado com sucesso`,
     };
   }
+  async findAllsuppliers(userId: string) {
+    const allProductsSuppliers = await this.prisma.suppliers.findMany({
+      where: { userId: userId },
+    });
+
+    return allProductsSuppliers;
+  }
 
   async findAll(
     { page, pageSize, orderBy, search }: PaginationDto,
