@@ -25,6 +25,15 @@ export class ExcelService {
     const json: unknown[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
     const firstRow = json[0]; // primeira linha
+    console.log(firstRow);
+
+    const supplierExist = await this.prisma.suppliers.findUnique({
+      where: { id: id },
+    });
+
+    if (!supplierExist) {
+      throw new NotFoundException('Fornecedor não existe.');
+    }
 
     if (firstRow[0] == 'Dólar da tela') {
       //deleta os dados antigos
@@ -37,7 +46,8 @@ export class ExcelService {
       const entries = dataRows
         .filter((row: unknown[]) => row.length >= 12)
         .map((row) => ({
-          suppliersName: id,
+          suppliersName: supplierExist?.name ?? '',
+          suppliersId: id,
           priceCatalogName: row[0]?.toString() || '',
           productName: row[1]?.toString() || '',
           referenceContent: row[2]?.toString() || '',
@@ -54,13 +64,19 @@ export class ExcelService {
       return {
         message: `Planilha importada com sucesso, foram importados: ${entries.length} produtos`,
       };
-    } else {
+    }
+
+    if (
+      typeof firstRow[0] === 'string' &&
+      firstRow[0].includes('LISTA DE PREÇO')
+    ) {
       await this.prisma.products.deleteMany({
         where: { suppliersName: id },
       });
 
       const allEntries: {
         suppliersName: string;
+        suppliersId: string;
         priceCatalogName: string;
         productName: string;
         referenceContent: string;
@@ -130,7 +146,7 @@ export class ExcelService {
         const entries = dataRows
           .filter((row: unknown[]) => row.length >= 2)
           .map((row) => ({
-            suppliersName: id,
+            suppliersName: supplierExist.name,
             suppliersId: id,
             priceCatalogName: row[0]?.toString() || 'teste',
             productName: row[1]?.toString() || '',
@@ -156,6 +172,10 @@ export class ExcelService {
       return {
         message: `Planilha importada com sucesso, foram importados: ${allEntries.length} produtos`,
       };
+    } else {
+      throw new NotFoundException(
+        'Essa planilha não condiz com o formato   pedido',
+      );
     }
   }
 
@@ -194,7 +214,7 @@ export class ExcelService {
         ...where,
         OR: [
           {
-            suppliersName: {
+            suppliersId: {
               contains: search,
               mode: 'insensitive',
             },

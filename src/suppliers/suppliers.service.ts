@@ -2,11 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
-import {
-  UnauthorizedException,
-  ConflictException,
-  BadRequestException,
-} from '@nestjs/common';
+import { ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { PaginationService } from '../excel/pagination/pagination.service';
 import { PaginationDto } from '../excel/pagination/dto/pagination.dto';

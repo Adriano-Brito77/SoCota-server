@@ -1,13 +1,18 @@
-import { Companies } from './../../node_modules/.prisma/client/index.d';
 import { Injectable } from '@nestjs/common';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { PrismaService } from 'src/prisma.service';
 import { BadRequestException, ConflictException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { PaginationDto } from 'src/excel/pagination/dto/pagination.dto';
+import { PaginationService } from 'src/excel/pagination/pagination.service';
 
 @Injectable()
 export class CompaniesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private paginationService: PaginationService,
+  ) {}
 
   async create(
     { name, finance_rate, profit_amount }: CreateCompanyDto,
@@ -51,7 +56,7 @@ export class CompaniesService {
 
     await this.prisma.profit_margins.createMany({
       data: company.profit_amount.map((amount) => ({
-        conpanie_id: newCompany.id,
+        company_id: newCompany.id,
         profit_amount: amount,
         userId: userId,
       })),
@@ -61,39 +66,54 @@ export class CompaniesService {
     };
   }
 
-  async findAll(userId: string) {
-    const companies = await this.prisma.companies.findMany({
-      where: { userId: userId },
-    });
-    if (!companies) {
-      throw new BadRequestException('Nenhuma empresa encontrada.');
-    }
-    const profitMargins = await this.prisma.profit_margins.findMany({
-      where: {
-        userId: userId,
-        conpanie_id: {
-          in: companies.map((company) => company.id),
-        },
-      },
-      select: {
-        profit_amount: true,
-        conpanie_id: true,
-      },
-    });
+  async findAll(
+    { page, pageSize, orderBy, search }: PaginationDto,
+    userId: string,
+  ) {
+    let where = {
+      userId: userId,
+    } as Prisma.CompaniesWhereInput;
 
-    const companiesWithProfitMargins = companies.map((company) => {
-      const profitMarginsForCompany = profitMargins.filter(
-        (margin) => margin.conpanie_id === company.id,
-      );
-      return {
-        ...company,
-        profit_amount: profitMarginsForCompany.map(
-          (margin) => margin.profit_amount,
-        ),
+    if (search) {
+      where = {
+        ...where,
+        OR: [
+          {
+            id: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          },
+        ],
       };
+    }
+
+    let orderByObject: Prisma.CompaniesOrderByWithAggregationInput | undefined =
+      undefined;
+
+    if (orderBy && orderBy.includes(',')) {
+      const [campo, direcao] = orderBy.split(',');
+      if (campo && (direcao === 'asc' || direcao === 'desc')) {
+        orderByObject = {
+          [campo]: direcao,
+        } as Prisma.CompaniesOrderByWithAggregationInput;
+      }
+    }
+
+    const data = await this.paginationService.paginate<
+      Prisma.CompaniesWhereInput,
+      Prisma.CompaniesOrderByWithAggregationInput
+    >(this.prisma.companies, {
+      page,
+      pageSize,
+      where,
+      orderBy: orderByObject,
+      include: {
+        profit_margins: true,
+      },
     });
 
-    return companiesWithProfitMargins;
+    return data;
   }
 
   async update(
@@ -129,7 +149,7 @@ export class CompaniesService {
     });
 
     const CompaniesProfitMargins = await this.prisma.profit_margins.findMany({
-      where: { conpanie_id: id, userId },
+      where: { company_id: id, userId },
       select: {
         id: true,
       },
@@ -171,13 +191,12 @@ export class CompaniesService {
         'Ja existe uma ou mias cotação para a empresa.',
       );
     }
+    const profitMargins = await this.prisma.profit_margins.deleteMany({
+      where: { company_id: id, userId },
+    });
 
     const company = await this.prisma.companies.delete({
       where: { id },
-    });
-
-    const profitMargins = await this.prisma.profit_margins.deleteMany({
-      where: { conpanie_id: id, userId },
     });
 
     return {

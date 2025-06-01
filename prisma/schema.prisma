@@ -32,6 +32,7 @@ model User {
 model Products {
   id               String    @id @default(uuid())
   suppliersName    String
+  suppliersId    String
   priceCatalogName String
   productName      String
   referenceContent String
@@ -65,6 +66,8 @@ model Companies {
   updated_at      DateTime @updatedAt
   userId         String
   Quotations  Quotations[] 
+  profit_margins  Profit_margins[]  
+
 
   @@map("companies")
 }
@@ -72,12 +75,14 @@ model Companies {
 
 model Profit_margins{
   id             String @id @default(cuid())
-  conpanie_id    String
+  company_id    String
   profit_amount  Float
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
   userId         String
   Quotations  Quotations[] 
+  Companies   Companies @relation(fields: [company_id], references: [id])
+
 
   @@map("profit_margins")
 }

@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
@@ -14,6 +15,7 @@ import { UpdateCompanyDto } from './dto/update-company.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { CurrentUser } from 'src/auth/jwt/current-user';
 import { AuthUser } from '../auth/jwt/current-user';
+import { PaginationDto } from 'src/excel/pagination/dto/pagination.dto';
 
 @Controller('companies')
 @UseGuards(AuthGuard)
@@ -29,8 +31,8 @@ export class CompaniesController {
   }
 
   @Get()
-  findAll(@CurrentUser() user: AuthUser) {
-    return this.companiesService.findAll(user.id);
+  findAll(@Query() query: PaginationDto, @CurrentUser() user: AuthUser) {
+    return this.companiesService.findAll(query, user.id);
   }
 
   @Patch(':id')
