@@ -160,7 +160,7 @@ export class CompaniesService {
       throw new BadRequestException('Essa empresa ja existe.');
     }
 
-    const companyUpdated = await this.prisma.companies.update({
+    await this.prisma.companies.update({
       where: { id, userId },
       data: {
         name: name,
@@ -168,23 +168,17 @@ export class CompaniesService {
       },
     });
 
-    const CompaniesProfitMargins = await this.prisma.profit_margins.findMany({
+    await this.prisma.profit_margins.deleteMany({
       where: { company_id: id, userId },
-      select: {
-        id: true,
-      },
     });
-
-    for (const [index, profitMargin] of CompaniesProfitMargins.entries()) {
-      if (profit_amount && profit_amount[index] !== undefined) {
-        await this.prisma.profit_margins.update({
-          where: { id: profitMargin.id },
-          data: {
-            profit_amount: profit_amount[index],
-          },
-        });
-      }
-    }
+    console.log(profit_amount);
+    await this.prisma.profit_margins.createMany({
+      data: (profit_amount ?? []).map((amount) => ({
+        company_id: id,
+        profit_amount: amount,
+        userId: userId,
+      })),
+    });
 
     return {
       message: `Empresa ${name} atualizada com sucesso`,
@@ -210,7 +204,7 @@ export class CompaniesService {
         'Ja existe uma ou mias cotação para a empresa.',
       );
     }
-    const profitMargins = await this.prisma.profit_margins.deleteMany({
+    await this.prisma.profit_margins.deleteMany({
       where: { company_id: id, userId },
     });
 

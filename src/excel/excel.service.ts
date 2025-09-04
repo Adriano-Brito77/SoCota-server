@@ -25,7 +25,6 @@ export class ExcelService {
     const json: unknown[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
     const firstRow = json[0]; // primeira linha
-    console.log(firstRow);
 
     const supplierExist = await this.prisma.suppliers.findUnique({
       where: { id: id },

@@ -80,7 +80,8 @@ model Profit_margins{
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
   userId         String
-  Quotations  Quotations[] 
+  quotations     Quotations[]
+
   Companies   Companies @relation(fields: [company_id], references: [id])
 
 

@@ -86,9 +86,9 @@ export class QuotationsService {
       const productsCost = priceItem + delivery_fee;
 
       const aplication = await this.getQuotationByDate(
-        payment_date!,
-        productExists.financialDueDate!,
-        has_credit!,
+        payment_date,
+        productExists.financialDueDate,
+        has_credit,
       );
       //Pagamento antecipado ao vencimento da lista do fornecedor
       if (parseFloat(aplication) < 0 && has_credit) {
@@ -262,11 +262,11 @@ export class QuotationsService {
       quotations: results.map((r) => r.quotation),
     };
   }
-  private async getQuotationByDate(
+  private getQuotationByDate(
     dataStr1: Date,
     dataStr2: Date,
     has_credit: boolean,
-  ): Promise<string> {
+  ): string {
     if (!dataStr1 || !dataStr2) {
       throw new BadRequestException('Datas inválidas para comparação');
     }
