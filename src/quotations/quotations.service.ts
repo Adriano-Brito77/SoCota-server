@@ -345,8 +345,11 @@ export class QuotationsService {
       include: {
         products: true,
         suppliers: true,
-        companies: true,
-        profit_margins: true,
+        companies: {
+          include: {
+            profit_margins: true,
+          },
+        },
       },
     });
 

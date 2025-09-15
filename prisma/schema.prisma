@@ -80,7 +80,7 @@ model Profit_margins{
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
   userId         String
-  quotations     Quotations[]
+  
 
   Companies   Companies @relation(fields: [company_id], references: [id])
 
@@ -106,7 +106,7 @@ model Quotations{
   products        Products @relation(fields: [product_id], references: [id])
   suppliers       Suppliers @relation(fields: [supplier_id], references: [id])
   companies       Companies @relation(fields: [company_id], references: [id])
-  profit_margins  Profit_margins @relation(fields: [profit_margin_id], references: [id])
+  
   
   @@map("quotations")
 }
